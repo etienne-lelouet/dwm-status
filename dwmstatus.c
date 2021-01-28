@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 		exit(1);
 
 	for (;; nanosleep(&req, &rem))
-	{	
+	{
 		// status = " | \0" doesn't work
 		// status = " | " status[3] = '\0' doesn't work either but I don't have the time right now to see why
 		status[0] = '\0';
@@ -219,23 +219,6 @@ int main(int argc, char **argv)
 			}
 			else
 			{
-				// printf("%s \n", curractivemodule.allocatedbuffer);
-
-				// for (i = 0; i < statussize; i++)
-				// {
-				// 	if (status[i] == '\0') {
-				// 		break;
-				// 	}
-				// 	printf("%c\n", status[i]);
-				// }
-
-				// for (i = 0; i < MODULEBUFFERSIZE; i++)
-				// {
-				// 	if (curractivemodule.allocatedbuffer[i] == '\0') {
-				// 		break;
-				// 	}
-				// 	printf("%c\n", curractivemodule.allocatedbuffer[i]);
-				// }
 				if ((strlen(status) + strlen(curractivemodule.allocatedbuffer) + 4) <= statussize)
 				{
 					strcat(status, curractivemodule.allocatedbuffer);
@@ -245,11 +228,17 @@ int main(int argc, char **argv)
 				{
 					fprintf(stdout, "Not enough space in status for strcat\n");
 				}
-				// snprintf(status, (nmodulesactive * MODULEBUFFERSIZE) * sizeof(char), "%s | %s", status, curractivemodule.allocatedbuffer);
 			}
 		}
 		setstatus(status);
 	}
+
+	for (curractivemoduleindex = 0; curractivemoduleindex < nmodulesactive; curractivemoduleindex++)
+	{
+		curractivemodule = activemodules[curractivemoduleindex];
+		free(curractivemodule.allocatedbuffer);
+	}
+	free(activemodules);
 
 	free(status);
 	XCloseDisplay(dpy);
