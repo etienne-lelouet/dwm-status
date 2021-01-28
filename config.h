@@ -20,7 +20,7 @@ static const char *batteryargs[] = {
 };
 
 static const char *volumeargs[] = {
-	"dwmcustom-getvolume\0", "dwmcustom-getvolume m\0", NULL
+	"pactl-getvolume\0", "pactl-getvolume m\0", NULL
 };
 
 struct module modules[] = {
