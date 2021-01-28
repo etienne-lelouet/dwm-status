@@ -1,29 +1,30 @@
-#include "types.h"
+#define DEBUGOPTION "-d"
 
 #define CHARGING "Charging"
 #define DISCHARGING "Discharging"
 #define FULL "Full"
 
-#define GETVOLUME "pulsemixer --get-volume"
-#define GETMUTE "pulsemixer --get-mute"
-
-#define UPDATEINTERVAL_MS 500
+#define UPDATEINTERVAL_MS 250
 
 #define AUDIOBACKEND_PULSE	0
 #define AUDIOBACKEND_ALSA	1
+
+#define MODULEBUFFERSIZE	256
 
 static const char *datetimefmt[] = {
 	"%a %b %d %H:%M:%S", NULL
 };
 
-static const char * batteryargs[] = {
-	"/sys/class/power_supply/BAT0/capacity", "/sys/class/power_supply/BAT0/status", NULL
+static const char *batteryargs[] = {
+	"/sys/class/power_supply/BAT0/capacity\0", "/sys/class/power_supply/BAT0/status\0", NULL
 };
 
-
+static const char *volumeargs[] = {
+	"dwmcustom-getvolume\0", "dwmcustom-getvolume m\0", NULL
+};
 
 struct module modules[] = {
-	{ "date",	{ .v = datetimefmt },		getdatetime,	1 },
-	{ "volume",	{ .i = AUDIOBACKEND_PULSE },		getvolume,	1 },
-	{ "battery",	{ .v = batteryargs },		getbattery,	0 }
-}
+	{ .name = "date\0",	.args = { .v = datetimefmt },					.ptr = getdatetime,	.active = 1 },
+	{ .name = "volume\0",	.args = { .i = AUDIOBACKEND_PULSE, .v = volumeargs },		.ptr = getvolume,	.active = 1 },
+	{ .name = "battery\0",	.args = { .v = batteryargs },					.ptr = getbattery,	.active = 0 }
+};

@@ -1,10 +1,20 @@
-struct args {
-	short nargs;
-	void* args;
+struct args
+{
+	int i;
+	float f;
+	const void *v;
 };
 
-struct module {
+struct module
+{
 	char name[32];
-	int (*ptr) (struct args);
 	struct args args;
+	int (*ptr)(struct args, char *);
+	char active;
+};
+
+struct activemodule 
+{
+	struct module *moduleptr;
+	char *allocatedbuffer;
 };
