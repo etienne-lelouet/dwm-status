@@ -26,5 +26,5 @@ static const char *volumeargs[] = {
 struct module modules[] = {
 	{ .name = "date\0",	.args = { .v = datetimefmt },					.ptr = getdatetime,	.active = 1 },
 	{ .name = "volume\0",	.args = { .i = AUDIOBACKEND_PULSE, .v = volumeargs },		.ptr = getvolume,	.active = 1 },
-	{ .name = "battery\0",	.args = { .v = batteryargs },					.ptr = getbattery,	.active = 0 }
+	{ .name = "battery\0",	.args = { .v = batteryargs },					.ptr = getbattery,	.active = 1 }
 };
