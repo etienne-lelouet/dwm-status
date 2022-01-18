@@ -12,7 +12,7 @@
 #define MODULEBUFFERSIZE	256
 
 static const char *datetimefmt[] = {
-	"%a %b %d %H:%M:%S", NULL
+	"%a %b %d %H:%M", NULL
 };
 
 static const char *batteryargs[] = {
@@ -20,11 +20,14 @@ static const char *batteryargs[] = {
 };
 
 static const char *volumeargs[] = {
-	"pactl-getvolume\0", "pactl-getvolume m\0", NULL
+	"/tmp/pactl-volumectl-sink", "pactl-getvolume m\0", NULL
 };
 
+// Pour plus tard : la commande qui permet de récupérer toutes les connexions actives non externes :
+// nmcli | sed -nE '/\(externally\)/,/^$/d;s/^(\S*?):\s+?connected.*$/\1/p'
+
 struct module modules[] = {
-	{ .name = "date\0",	.args = { .v = datetimefmt },					.ptr = getdatetime,	.active = 1 },
-	{ .name = "volume\0",	.args = { .i = AUDIOBACKEND_PULSE, .v = volumeargs },		.ptr = getvolume,	.active = 1 },
-	{ .name = "battery\0",	.args = { .v = batteryargs },					.ptr = getbattery,	.active = 1 }
+	{ .name = "date\0",		.args = { .v = datetimefmt },								.loop_func = getdatetime, .init_func = NULL,	.active = 1 },
+	{ .name = "volume\0",	.args = { .i = AUDIOBACKEND_PULSE, .v = volumeargs },		.loop_func = getvolume,	.init_func = init_pactl_volumectl, .active = 1 },
+	{ .name = "battery\0",	.args = { .v = batteryargs },								.loop_func = getbattery, .init_func = NULL,	.active = 1 }
 };

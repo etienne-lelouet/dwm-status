@@ -21,6 +21,7 @@
 
 void setstatus(char *str);
 int getdatetime(struct args args, char *buffer);
+int init_pactl_volumectl(struct args args);
 int getvolume(struct args args, char *buffer);
 int getbattery(struct args args, char *buffer);
 
@@ -32,6 +33,59 @@ void setstatus(char *str)
 {
 	XStoreName(dpy, DefaultRootWindow(dpy), str);
 	XSync(dpy, False);
+}
+
+int init_pactl_volumectl(struct args args) {
+	FILE* sinkfile_fd = fopen(((char **)(args.v))[0], "w");
+	if (sinkfile_fd == NULL) {
+		perror("fopen sinkfile");
+		return -1;
+	}
+
+	FILE* popen_fd = popen("pactl-getsink", "r");
+	if (sinkfile_fd == NULL) {
+		perror("fopen sinkfile");
+		return -1;
+	}
+
+	int first_sink_id;
+	int scanf_res = fscanf(popen_fd, "%d\n", &first_sink_id); 
+
+	if (scanf_res== EOF) {
+		perror("fscanf");
+		return -1;
+	}
+	if (scanf_res < 0) {
+		fprintf(stderr, "error scanning getsink res.\n");
+		return -1;
+	}
+	int strlen = snprintf(NULL, 0, "%d", first_sink_id);
+	if (strlen <= 0) {
+		fprintf(stderr, "error when calculating output string len\n");
+		return -1;
+	}
+	strlen = strlen +1;
+	char *str_value = malloc(sizeof(char)*strlen);
+	if (str_value == NULL) {
+		fprintf(stderr, "error when mallocing memory for output string\n");
+		return -1;
+	}
+	if (sprintf(str_value, "%d", first_sink_id) < 0) {
+		fprintf(stderr, "error when outputing str representation of sink\n");
+		return -1;
+	};
+	if (fputs(str_value, sinkfile_fd) <= 0) {
+		fprintf(stderr, "error when writing sink id to file\n");
+		return -1;
+		
+	}
+	if (fsync(fileno(sinkfile_fd)) < 0) {
+		perror("fsync");
+		return -1;
+	}
+	fclose(sinkfile_fd);
+	fprintf(stderr, "successfully wrote sink id, is %s\n", str_value);
+	return 0;
 }
 
 int getdatetime(struct args args, char *buffer)
@@ -62,10 +116,7 @@ int getvolume(struct args args, char *buffer)
 	int right;
 	int mute;
 
-	char *volumeget = ((char **)(args.v))[0];
-	char *muteget = ((char **)(args.v))[1];
-
-	fd = popen(volumeget, "r");
+	fd = popen("pactl-getvolume", "r");
 	if (fd == NULL)
 	{
 		perror("getvolume");
@@ -74,7 +125,7 @@ int getvolume(struct args args, char *buffer)
 	fscanf(fd, "%d %d", &left, &right);
 	fclose(fd);
 
-	fd = popen(muteget, "r");
+	fd = popen("pactl-getvolume m", "r");
 	if (fd == NULL)
 	{
 		perror("getmute");
@@ -82,7 +133,19 @@ int getvolume(struct args args, char *buffer)
 	}
 	fscanf(fd, "%d", &mute);
 	fclose(fd);
-	sprintf(buffer, "l:%d r:%d m:%d", left, right, mute);
+
+	fd = popen("pactl-getsink -n", "r");
+	if (fd == NULL)
+	{
+		perror("getmute");
+		return -1;
+	}
+	char wholestring[256];
+	char truncstr[4];
+	fscanf(fd, "%s", wholestring);
+	strncpy(truncstr, wholestring, 3);
+	fclose(fd);
+	sprintf(buffer, "%s : l:%d r:%d m:%d", truncstr, left, right, mute);
 	return 0;
 }
 
@@ -200,10 +263,23 @@ int main(int argc, char **argv)
 
 	size_t statussize = nmodulesactive * MODULEBUFFERSIZE * sizeof(char);
 
-	printf("statussize=%lu\n", statussize);
-
-	if ((status = malloc(statussize)) == NULL)
+	fprintf(stderr, "statussize=%lu\n", statussize);
+	fprintf(stderr, "running init functions\n");
+	for (curractivemoduleindex = 0; curractivemoduleindex < nmodulesactive; curractivemoduleindex++)
+	{
+		curractivemodule = activemodules[curractivemoduleindex];
+		if (curractivemodule.moduleptr->init_func == NULL)
+			continue;
+		fprintf(stderr, "running init function for module : %s\n", curractivemodule.moduleptr->name);
+		if (curractivemodule.moduleptr->init_func(curractivemodule.moduleptr->args) == -1) {
+			fprintf(stderr, "error when executing function\n");
+			exit(1);
+		}
+	}
+	if ((status = malloc(statussize)) == NULL)  {
+		fprintf(stderr, "error mallocing statussize (%lu bytes)\n", statussize);
 		exit(1);
+	}
 
 	for (;; nanosleep(&req, &rem))
 	{
@@ -213,7 +289,7 @@ int main(int argc, char **argv)
 		for (curractivemoduleindex = 0; curractivemoduleindex < nmodulesactive; curractivemoduleindex++)
 		{
 			curractivemodule = activemodules[curractivemoduleindex];
-			if (curractivemodule.moduleptr->ptr(curractivemodule.moduleptr->args, curractivemodule.allocatedbuffer) != 0)
+			if (curractivemodule.moduleptr->loop_func(curractivemodule.moduleptr->args, curractivemodule.allocatedbuffer) != 0)
 			{
 				fprintf(stderr, "Error when executing function associated with module %s\n", curractivemodule.moduleptr->name);
 			}

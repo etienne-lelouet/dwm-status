@@ -9,7 +9,8 @@ struct module
 {
 	char name[32];
 	struct args args;
-	int (*ptr)(struct args, char *);
+	int (*init_func)(struct args);
+	int (*loop_func)(struct args, char *);
 	char active;
 };
 
