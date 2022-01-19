@@ -41,9 +41,13 @@ install: all
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	@cp -f ${NAME} ${DESTDIR}${PREFIX}/bin
 	@chmod 755 ${DESTDIR}${PREFIX}/bin/${NAME}
+	@echo installing and enabling unit file to /usr/lib/systemd/user
+	@cp -f dwmstatus.service /usr/lib/systemd/user
 
 uninstall:
 	@echo removing executable file from ${DESTDIR}${PREFIX}/bin
 	@rm -f ${DESTDIR}${PREFIX}/bin/${NAME}
+	@echo removing unit file from file from /usr/lib/systemd/user
+	@rm -f  /usr/lib/systemd/user/dwmstatus.service
 
 .PHONY: all options clean dist install uninstall

@@ -52,7 +52,7 @@ int init_pactl_volumectl(struct args args) {
 	int scanf_res = fscanf(popen_fd, "%d\n", &first_sink_id); 
 
 	if (scanf_res== EOF) {
-		perror("fscanf");
+		perror("pactl-getsink fscanf");
 		return -1;
 	}
 	if (scanf_res < 0) {
