@@ -85,6 +85,7 @@ int init_pactl_volumectl(struct args args) {
 	}
 	fclose(sinkfile_fd);
 	fprintf(stderr, "successfully wrote sink id, is %s\n", str_value);
+	free(str_value);
 	return 0;
 }
 
