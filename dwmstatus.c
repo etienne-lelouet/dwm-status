@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <signal.h>
 #include "types.h"
 
 void setstatus(char *str);
@@ -28,6 +29,13 @@ ssize_t getbattery(module *module, char *buffer);
 #include "config.h"
 
 static Display *dpy;
+char *status;
+
+void sigterm_handler(int sig) {
+	free(status);
+	XCloseDisplay(dpy);
+	exit(0);
+}
 
 void setstatus(char *str)
 {
@@ -203,7 +211,6 @@ ssize_t getbattery(module *module, char *buffer)
 
 int main(int argc, char **argv)
 {
-	char *status;
 	size_t nmodules;
 	struct timespec rem, req;
 
@@ -303,7 +310,6 @@ int main(int argc, char **argv)
 
 	free(status);
 
-	free(status);
 	XCloseDisplay(dpy);
 
 	return 0;
