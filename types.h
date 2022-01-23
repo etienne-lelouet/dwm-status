@@ -22,5 +22,4 @@ struct module
 struct activemodule 
 {
 	struct module *moduleptr;
-	char *allocatedbuffer;
 };

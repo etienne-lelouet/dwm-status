@@ -207,7 +207,6 @@ int main(int argc, char **argv)
 	int i, curractivemoduleindex;
 	struct activemodule *activemodules;
 	struct activemodule curractivemodule;
-	char *currbuffer;
 	size_t nmodules, nmodulesactive;
 	struct timespec rem, req;
 
@@ -260,10 +259,9 @@ int main(int argc, char **argv)
 		{
 			statussize = statussize + modules[i].max_chars_written + 2;
 			fprintf(stderr, "module %s status_size %lu\n", modules[i].name, modules[i].max_chars_written);
-			currbuffer = (char *)malloc(modules[i].max_chars_written);
 			curractivemodule = (struct activemodule){
-				.moduleptr = &modules[i],
-				.allocatedbuffer = currbuffer};
+				.moduleptr = &modules[i]
+			};
 			activemodules[curractivemoduleindex] = curractivemodule;
 			curractivemoduleindex++;
 		}
@@ -314,11 +312,6 @@ int main(int argc, char **argv)
 		setstatus(status);
 	}
 
-	for (curractivemoduleindex = 0; curractivemoduleindex < nmodulesactive; curractivemoduleindex++)
-	{
-		curractivemodule = activemodules[curractivemoduleindex];
-		free(curractivemodule.allocatedbuffer);
-	}
 	free(activemodules);
 
 	free(status);
