@@ -145,6 +145,7 @@ int getvolume(struct args args, char *buffer)
 	char truncstr[4];
 	fscanf(fd, "%s", wholestring);
 	strncpy(truncstr, wholestring, 3);
+	strcat(truncstr, "\0");
 	fclose(fd);
 	sprintf(buffer, "%s : l:%d r:%d m:%d", truncstr, left, right, mute);
 	return 0;
