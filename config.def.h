@@ -26,10 +26,8 @@ static const char *volumeargs[] = {
 // Pour plus tard : la commande qui permet de récupérer toutes les connexions actives non externes :
 // nmcli | sed -nE '/\(externally\)/,/^$/d;s/^(\S*?):\s+?connected.*$/\1/p'
 
-#include "types.h"
-
 module modules[] = {
-	{ .name = "date",		.args = { .v = datetimefmt },								.loop_func = getdatetime,	.init_func = NULL,					.active = 1,  },
-	{ .name = "volume",		.args = { .i = AUDIOBACKEND_PULSE, .v = volumeargs },		.loop_func = getvolume,		.init_func = init_pactl_volumectl,	.active = 1 },
-	{ .name = "battery",	.args = { .v = batteryargs },								.loop_func = getbattery,	.init_func = NULL,					.active = 1 }
+	{ .name = "date",		.args = { .v = datetimefmt },								.loop_func = getdatetime,	.init_func = NULL,					.active = 1, .max_chars_written = 16 },
+	{ .name = "volume",		.args = { .i = AUDIOBACKEND_PULSE, .v = volumeargs },		.loop_func = getvolume,		.init_func = init_pactl_volumectl,	.active = 1, .max_chars_written = 20 },
+	{ .name = "battery",	.args = { .v = batteryargs },								.loop_func = getbattery,	.init_func = NULL,					.active = 1, .max_chars_written = 4 }
 };

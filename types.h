@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 struct args
 {
 	int i;
@@ -5,13 +7,16 @@ struct args
 	const void *v;
 };
 
+typedef struct module module;
+
 struct module
 {
 	char name[32];
 	struct args args;
 	int (*init_func)(struct args);
-	int (*loop_func)(struct args, char *);
+	ssize_t (*loop_func)(module *, char *);
 	char active;
+	size_t max_chars_written;
 };
 
 struct activemodule 
