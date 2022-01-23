@@ -21,7 +21,7 @@
 
 void setstatus(char *str);
 ssize_t getdatetime(module *module, char *buffer);
-int init_pactl_volumectl(struct args args);
+int init_pactl_volumectl(module *module);
 ssize_t getvolume(module *module, char *buffer);
 ssize_t getbattery(module *module, char *buffer);
 
@@ -35,9 +35,9 @@ void setstatus(char *str)
 	XSync(dpy, False);
 }
 
-int init_pactl_volumectl(struct args args)
+int init_pactl_volumectl(module* module)
 {
-	FILE *sinkfile_fd = fopen(((char **)(args.v))[0], "w");
+	FILE *sinkfile_fd = fopen(((char **)(module->args.v))[0], "w");
 	if (sinkfile_fd == NULL)
 	{
 		perror("fopen sinkfile");
@@ -204,10 +204,7 @@ ssize_t getbattery(module *module, char *buffer)
 int main(int argc, char **argv)
 {
 	char *status;
-	int i, curractivemoduleindex;
-	struct activemodule *activemodules;
-	struct activemodule curractivemodule;
-	size_t nmodules, nmodulesactive;
+	size_t nmodules;
 	struct timespec rem, req;
 
 	req = (struct timespec){
@@ -232,50 +229,36 @@ int main(int argc, char **argv)
 
 	nmodules = sizeof(modules) / sizeof(struct module);
 
-	nmodulesactive = 0;
-
-	for (i = 0; i < nmodules; i++)
-	{
-		if (modules[i].active == 1)
-		{
-			nmodulesactive++;
-		}
-	}
-
-	if (nmodulesactive == 0)
-	{
-		fprintf(stderr, "no modules active");
-		return 1;
-	}
-
-	activemodules = (struct activemodule *)malloc(nmodulesactive * sizeof(struct activemodule));
-
 	size_t statussize = 0;
 
-	curractivemoduleindex = 0;
-	for (i = 0; i < nmodules; i++)
+	module *head;
+	module *prevactive = NULL;
+	for (int i = 0; i < nmodules; i++)
 	{
 		if (modules[i].active == 1)
 		{
 			statussize = statussize + modules[i].max_chars_written + 2;
 			fprintf(stderr, "module %s status_size %lu\n", modules[i].name, modules[i].max_chars_written);
-			curractivemodule = (struct activemodule){
-				.moduleptr = &modules[i]
-			};
-			activemodules[curractivemoduleindex] = curractivemodule;
-			curractivemoduleindex++;
+			if (prevactive == NULL)
+				head = &(modules[i]);
+			else
+				prevactive->nextactive = &(modules[i]);
+
+			prevactive = &(modules[i]);
 		}
 	}
 
 	fprintf(stderr, "statussize=%lu\n", statussize);
 	fprintf(stderr, "running init functions\n");
-	for (curractivemoduleindex = 0; curractivemoduleindex < nmodulesactive; curractivemoduleindex++)
+
+	module *curactive;
+
+	for (curactive = head; curactive != NULL; curactive = curactive->nextactive)
 	{
-		curractivemodule = activemodules[curractivemoduleindex];
-		if (curractivemodule.moduleptr->init_func == NULL)
+		if (curactive->init_func == NULL)
 			continue;
-		fprintf(stderr, "running init function for module : %s\n", curractivemodule.moduleptr->name);
-		if (curractivemodule.moduleptr->init_func(curractivemodule.moduleptr->args) == -1)
+		fprintf(stderr, "running init function for module : %s\n", curactive->name);
+		if (curactive->init_func(curactive) == -1)
 		{
 			fprintf(stderr, "error when executing function\n");
 			exit(1);
@@ -286,7 +269,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "error mallocing statussize (%lu bytes)\n", statussize);
 		exit(1);
 	}
-	size_t position ;
+	size_t position;
 	ssize_t written_bytes;
 	for (;; nanosleep(&req, &rem))
 	{
@@ -294,13 +277,12 @@ int main(int argc, char **argv)
 		// status = " | " status[3] = '\0' doesn't work either but I don't have the time right now to see why
 		position = 0;
 		status[position] = '\0';
-		for (curractivemoduleindex = 0; curractivemoduleindex < nmodulesactive; curractivemoduleindex++)
+		for (curactive = head; curactive != NULL; curactive = curactive->nextactive)
 		{
-			curractivemodule = activemodules[curractivemoduleindex];
-			written_bytes = curractivemodule.moduleptr->loop_func(curractivemodule.moduleptr, &(status[position]));
+			written_bytes = curactive->loop_func(curactive, &(status[position]));
 			if (written_bytes < 0)
 			{
-				fprintf(stderr, "Error when executing function associated with module %s, printing perror\n", curractivemodule.moduleptr->name);
+				fprintf(stderr, "Error when executing function associated with module %s, printing perror\n", curactive->name);
 				perror("ici");
 			}
 			else
@@ -312,7 +294,7 @@ int main(int argc, char **argv)
 		setstatus(status);
 	}
 
-	free(activemodules);
+	free(status);
 
 	free(status);
 	XCloseDisplay(dpy);
