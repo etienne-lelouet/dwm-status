@@ -1,4 +1,8 @@
+#include <stdlib.h>
+#include "types.h"
+
 #define DEBUGOPTION "-d"
+#define VERSIONOPTION "-v"
 
 #define CHARGING "Charging"
 #define DISCHARGING "Discharging"

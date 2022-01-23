@@ -219,6 +219,13 @@ int main(int argc, char **argv)
 			printf("starting in debug mode :\
 				buffering stdin and stdout line by line");
 		}
+	
+		if (strcmp(argv[i], VERSIONOPTION) == 0)
+		{
+			// printing version and exiting
+			printf("dwmstatus-%s\n", VERSION);
+			exit(0);
+		}
 	}
 
 	if (!(dpy = XOpenDisplay(NULL)))
