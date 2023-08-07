@@ -2,6 +2,7 @@
 #define TYPES_H
 
 #include <stddef.h>
+#include <sys/types.h>
 
 struct args
 {
@@ -22,4 +23,5 @@ struct module
 	size_t max_chars_written;
 	module* nextactive;
 };
+
 #endif
