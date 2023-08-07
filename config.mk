@@ -21,10 +21,6 @@ CFLAGS = -std=c11 -pedantic -Wall -O3 ${INCS} ${CPPFLAGS}
 # LDFLAGS = -g ${LIBS}
 LDFLAGS = -s ${LIBS}
 
-# Solaris
-#CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"
-#LDFLAGS = ${LIBS}
-
 # compiler and linker
 CC = cc
 
