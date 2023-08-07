@@ -2,3 +2,5 @@
 **/dwmstatus.o
 **/.vscode/
 **/config.h
+**/compile_commands.json
+**/.cache/
