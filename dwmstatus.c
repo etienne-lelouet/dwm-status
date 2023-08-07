@@ -8,7 +8,6 @@
 ** network status (long term, nmtui works fine for now)
 */
 
-#include "types.h"
 #include <X11/Xlib.h>
 #include <errno.h>
 #include <signal.h>
@@ -18,14 +17,15 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include "types.h"
+#include "config.h"
+
 
 void setstatus(char *str);
 ssize_t getdatetime(module *module, char *buffer);
 int init_pactl_volumectl(module *module);
 ssize_t getvolume(module *module, char *buffer);
 ssize_t getbattery(module *module, char *buffer);
-
-#include "config.h"
 
 static Display *dpy;
 char *status;
@@ -190,19 +190,20 @@ ssize_t getbattery(module *module, char *buffer) {
 
 int main(int argc, char **argv) {
   size_t nmodules;
-  struct timespec rem, req;
+  struct timespec rem, req, startup_sleep;
 
   req = (struct timespec){.tv_sec = UPDATEINTERVAL_MS / 1000,
                           .tv_nsec = (UPDATEINTERVAL_MS % 1000) * 1000000};
+  
+  startup_sleep = (struct timespec){.tv_sec = 1,
+                          .tv_nsec = 0};
 
   for (int i = 0; i < argc; i++) {
-    printf("argv[%d]: %s\n", i, argv[i]);
-    printf("res = %d\n", strcmp(argv[i], DEBUGOPTION));
     if (strcmp(argv[i], DEBUGOPTION) == 0) {
       setvbuf(stderr, (char *)NULL, _IOLBF, 0);
       setvbuf(stdout, (char *)NULL, _IOLBF, 0);
-      printf("starting in debug mode :\
- buffering stderr and stdout line by line \n");
+      fprintf(stderr, "starting in debug mode :\
+ buffering stderr and stdout line by line\n");
     }
 
     if (strcmp(argv[i], VERSIONOPTION) == 0) {
@@ -211,9 +212,24 @@ int main(int argc, char **argv) {
       exit(0);
     }
   }
-  while (!(dpy = XOpenDisplay(NULL))) {
-    fprintf(stderr, "Cannot open display.\n");
-  }
+
+  printf("value of DISPLAY env var is : %s\n", getenv("DISPLAY"));
+
+  int try = 0;
+  do {
+    dpy = XOpenDisplay(NULL);
+    if (dpy != NULL) {
+      break;
+    }
+    fprintf(stderr, "Cannot open default display, try = %d.\n", try);
+    dpy = XOpenDisplay(XDISPLAY);
+    if (dpy != NULL) {
+      break;
+    }
+    fprintf(stderr, "Cannot open %s display, try = %d.\n", XDISPLAY, try);
+    try++;
+    nanosleep(&startup_sleep, &rem);
+  } while (dpy == NULL);
 
   nmodules = sizeof(modules) / sizeof(struct module);
 
