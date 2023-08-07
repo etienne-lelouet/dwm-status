@@ -213,20 +213,21 @@ int main(int argc, char **argv) {
     }
   }
 
-  printf("value of DISPLAY env var is : %s\n", getenv("DISPLAY"));
+  char* display = getenv("DISPLAY");
+
+  if (display == NULL) {
+    display = XDISPLAY;
+  }
+
+  printf("Trying to connect to display %s\n", display);
 
   int try = 0;
   do {
-    dpy = XOpenDisplay(NULL);
+    dpy = XOpenDisplay(display);
     if (dpy != NULL) {
       break;
     }
-    fprintf(stderr, "Cannot open default display, try = %d.\n", try);
-    dpy = XOpenDisplay(XDISPLAY);
-    if (dpy != NULL) {
-      break;
-    }
-    fprintf(stderr, "Cannot open %s display, try = %d.\n", XDISPLAY, try);
+    fprintf(stderr, "Cannot open  display, %s, try = %d.\n", try);
     try++;
     nanosleep(&startup_sleep, &rem);
   } while (dpy == NULL);
