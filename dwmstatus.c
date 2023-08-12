@@ -20,13 +20,6 @@
 #include "types.h"
 #include "config.h"
 
-
-void setstatus(char *str);
-ssize_t getdatetime(module *module, char *buffer);
-int init_pactl_volumectl(module *module);
-ssize_t getvolume(module *module, char *buffer);
-ssize_t getbattery(module *module, char *buffer);
-
 static Display *dpy;
 char *status;
 
@@ -227,7 +220,7 @@ int main(int argc, char **argv) {
     if (dpy != NULL) {
       break;
     }
-    fprintf(stderr, "Cannot open  display, %s, try = %d.\n", try);
+    fprintf(stderr, "Cannot open  display, %s, try = %d.\n", display, try);
     try++;
     nanosleep(&startup_sleep, &rem);
   } while (dpy == NULL);
